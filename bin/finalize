@@ -1,0 +1,33 @@
+#!/bin/bash
+set -eu
+if [[ "${CLBP_DEBUG:-no}" != "no" ]]; then
+  set -x
+fi
+
+buildpack=$(dirname $(readlink -f ${BASH_SOURCE%/*}))
+build=$1
+cache=$2
+deps=$3
+index=$4
+
+echo
+echo "Finalizing Common Lisp runtime environment..."
+echo
+mkdir -p $build/bin
+
+# sbcl bin
+cat >$build/bin/sbcl <<EOF
+#!/bin/bash
+export SBCL_HOME=/home/vcap/deps/$index/lib/sbcl
+export HOME=$build
+exec /home/vcap/deps/$index/bin/sbcl "\$@"
+EOF
+
+# chmod all the bins!
+chmod 0755 $build/bin/*
+
+if [[ -d $deps/$index/home/quicklisp ]]; then
+  cp -a $deps/$index/home/quicklisp $build/quicklisp
+fi
+
+exit 0

@@ -1,0 +1,14 @@
+#!/bin/bash
+set -eu
+if [[ "${CLBP_DEBUG:-no}" != "no" ]]; then
+  set -x
+fi
+
+build=$1
+if [[ -n "$(find $build -name '*.lisp' -o -name '*.cl' -o -name '*.lsp')" ]]; then
+  echo "detected a Common Lisp application"
+  exit 0
+else
+  echo "no"
+  exit 1
+fi

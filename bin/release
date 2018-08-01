@@ -1,0 +1,34 @@
+#!/bin/bash
+set -eu
+if [[ "${CLBP_DEBUG:-no}" != "no" ]]; then
+  set -x
+fi
+
+buildpack=$(dirname $(readlink -f ${BASH_SOURCE%/*}))
+build=$1
+
+ls -la $build >&2
+run=
+for suffix in lisp lsp cl; do
+  for root in run init app web doit; do
+    if [[ -z $run ]]; then
+      echo >&2 "checking for $root.$suffix in $build ..."
+      if [[ -f $build/$root.$suffix ]]; then
+        echo >&2 "FOUND $root.suffix in $build; using that for default entrypoint!"
+        run=$root.$suffix
+      fi
+    fi
+  done
+done
+if [[ -z $run ]]; then
+  echo >&2 "FAILED to determine default entrypoint."
+  exit 1
+fi
+
+cat <<EOF
+default_process_types:
+  web: /app/bin/sbcl --script $run
+  #web: /bin/sh -c 'pwd; ls -lahR /home/vcap'
+  #web: /bin/sh -c 'while true; do nc -l \$PORT; done'
+EOF
+exit 0
